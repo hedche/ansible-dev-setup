@@ -1,0 +1,42 @@
+---
+- name: Mac Setup
+  hosts: localhost
+  gather_facts: False
+
+  tasks:
+    - name: Install Zsh with Homebrew
+      command: brew install zsh
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Download install script
+      get_url:
+        url: "https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+        dest: "/tmp/install.sh"
+        force: yes
+
+    - name: Set install script to be executable
+      file:
+        path: "/tmp/install.sh"
+        mode: 0755
+
+    - name: Install Oh My Zsh
+      command: /tmp/install.sh
+      environment:
+        HOME: "{{ lookup('env','HOME') }}"
+      register: install_oh_my_zsh
+      changed_when: '"The $ZSH folder already exists" not in install_oh_my_zsh.stdout and install_oh_my_zsh.rc == 0'
+      failed_when: '"The $ZSH folder already exists" not in install_oh_my_zsh.stdout and install_oh_my_zsh.rc == 0'
+
+    - name: Debug for install_oh_my_zsh
+      debug:
+        var: install_oh_my_zsh
+
+    - name: Download dot-files
+      get_url:
+        url: "https://raw.githubusercontent.com/hedche/dot-files/master/{{ item }}"
+        dest: "$HOME/"
+      with_items:
+        - .bashrc
+        - .vimrc
+        - .zshrc
